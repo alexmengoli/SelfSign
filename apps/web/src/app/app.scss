@@ -41,19 +41,25 @@
 
 .app-body {
   display: grid;
-  grid-template-columns: 320px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: var(--app-surface-gap);
   min-height: 0;
+  padding: var(--app-surface-gap);
+  background: var(--mat-sys-surface-container);
 
   &.mobile {
     grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    padding: 0;
   }
 }
 
 .app-sidebar {
   min-height: 0;
   overflow-y: auto;
-  border-right: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--app-panel-radius);
   background: var(--mat-sys-surface-container-low);
+  box-shadow: var(--app-panel-shadow);
 }
 
 .app-document {

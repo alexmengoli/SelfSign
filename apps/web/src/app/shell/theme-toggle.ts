@@ -42,6 +42,11 @@ import { type ThemePreference, ThemeService } from '../core/theme.service';
       --mat-button-toggle-height: 36px;
     }
 
+    mat-button-toggle {
+      width: 40px;
+      flex: none;
+    }
+
     svg {
       display: block;
       width: 18px;

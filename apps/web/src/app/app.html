@@ -11,12 +11,12 @@
 </header>
 
 <div class="app-body" [class.mobile]="layout.isMobile()">
+  <main class="app-document">
+    <p class="empty">Open a PDF to get started.</p>
+  </main>
   @if (!layout.isMobile()) {
     <aside class="app-sidebar" aria-label="Fields">
       <app-sidebar />
     </aside>
   }
-  <main class="app-document">
-    <p class="empty">Open a PDF to get started.</p>
-  </main>
 </div>

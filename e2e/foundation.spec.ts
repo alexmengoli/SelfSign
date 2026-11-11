@@ -21,6 +21,36 @@ async function isDark(page: Page): Promise<boolean> {
   return relativeLuminance(await bodyBackground(page)) < 0.2;
 }
 
+async function expectCenteredThemeIcons(page: Page): Promise<void> {
+  const geometry = await page.getByRole('radiogroup', { name: 'Theme' }).getByRole('radio').evaluateAll((buttons) =>
+    buttons.map((button) => {
+      const svg = button.querySelector('svg');
+      const segment = button.closest('mat-button-toggle');
+      if (!svg || !segment) throw new Error('Missing theme icon or segment');
+      const buttonBox = button.getBoundingClientRect();
+      const iconBox = svg.getBoundingClientRect();
+      return {
+        name: button.getAttribute('aria-label'),
+        buttonHeight: buttonBox.height,
+        buttonWidth: buttonBox.width,
+        segmentWidth: segment.getBoundingClientRect().width,
+        iconWidth: iconBox.width,
+        iconHeight: iconBox.height,
+        verticalOffset: Math.abs(iconBox.y + iconBox.height / 2 - buttonBox.y - buttonBox.height / 2),
+      };
+    }),
+  );
+  expect(geometry).toHaveLength(3);
+  for (const icon of geometry) {
+    expect(icon.buttonHeight, `${icon.name} button height`).toBe(36);
+    expect(icon.buttonWidth, `${icon.name} button width`).toBe(40);
+    expect(icon.segmentWidth, `${icon.name} segment width`).toBe(40);
+    expect(icon.iconWidth, `${icon.name} icon width`).toBe(18);
+    expect(icon.iconHeight, `${icon.name} icon height`).toBe(18);
+    expect(icon.verticalOffset, `${icon.name} vertical offset`).toBeLessThanOrEqual(1);
+  }
+}
+
 /** Foreground and effective background colors of visible text elements. */
 async function textColors(page: Page): Promise<{ text: string; color: string; background: string }[]> {
   return page.evaluate(() => {
@@ -116,6 +146,71 @@ test.describe('foundation', () => {
   });
 
   for (const colorScheme of ['light', 'dark'] as const) {
+    for (const viewport of [{ width: 1440, height: 900 }, { width: 360, height: 740 }]) {
+      test(`${colorScheme} theme icons stay centered at ${viewport.width}px`, async ({ page }) => {
+        await page.setViewportSize(viewport);
+        await page.emulateMedia({ colorScheme });
+        await page.goto('/');
+        await expectCenteredThemeIcons(page);
+
+        for (const name of ['System', 'Light', 'Dark']) {
+          const option = page.getByRole('radio', { name, exact: true });
+          await option.hover();
+          await expectCenteredThemeIcons(page);
+          await option.click();
+          await expect(option).toBeChecked();
+          await expectCenteredThemeIcons(page);
+        }
+
+        await page.getByRole('radio', { name: 'System', exact: true }).click();
+        await page.keyboard.press('Tab');
+        await page.keyboard.press('Shift+Tab');
+        for (const name of ['System', 'Light', 'Dark']) {
+          const option = page.getByRole('radio', { name, exact: true });
+          await expect(option).toBeFocused();
+          await expect(option).toBeChecked();
+          await expectCenteredThemeIcons(page);
+          await page.keyboard.press('ArrowRight');
+        }
+      });
+    }
+
+    test(`${colorScheme} theme selector uses accessible pill segments`, async ({ page }) => {
+      await page.emulateMedia({ colorScheme });
+      await page.goto('/');
+
+      const group = page.getByRole('radiogroup', { name: 'Theme' });
+      await expect(group).toHaveCSS('border-radius', '999px');
+      for (const name of ['System', 'Light', 'Dark']) {
+        const option = page.getByRole('radio', { name, exact: true });
+        await option.hover();
+        await expect(page.locator('.mat-mdc-tooltip').filter({ hasText: name })).toBeVisible();
+        await option.click();
+        await expect(option).toBeChecked();
+        await expect(group.locator('[aria-checked="true"]')).toHaveCount(1);
+        const segment = option.locator('..');
+        await expect(segment).toHaveCSS('border-radius', '999px');
+        await expect(segment).toHaveCSS('border-left-width', '0px');
+        await expect(segment).toHaveCSS('border-right-width', '0px');
+        const selectedBackground = await segment.evaluate((element) => getComputedStyle(element).backgroundColor);
+        expect(selectedBackground).not.toBe(await group.evaluate((element) => getComputedStyle(element).backgroundColor));
+      }
+
+      await page.getByRole('radio', { name: 'System', exact: true }).click();
+      await page.keyboard.press('Tab');
+      await page.keyboard.press('Shift+Tab');
+      const system = page.getByRole('radio', { name: 'System', exact: true });
+      await expect(system).toBeFocused();
+      await expect(system).toHaveCSS('outline-style', 'solid');
+      await expect(system).toHaveCSS('outline-width', '2px');
+      await page.keyboard.press('ArrowRight');
+      await expect(page.getByRole('radio', { name: 'Light', exact: true })).toBeChecked();
+      await page.keyboard.press('ArrowRight');
+      await expect(page.getByRole('radio', { name: 'Dark', exact: true })).toBeChecked();
+      await page.keyboard.press('ArrowRight');
+      await expect(system).toBeChecked();
+    });
+
     test(`${colorScheme} theme text meets WCAG AA contrast`, async ({ page }) => {
       await page.emulateMedia({ colorScheme });
       for (const width of [1440, 360]) {
@@ -132,43 +227,80 @@ test.describe('foundation', () => {
     });
   }
 
-  test('desktop layout shows the sidebar on the left', async ({ page }) => {
-    await page.setViewportSize({ width: 1440, height: 900 });
-    await page.goto('/');
+  for (const width of [768, 1024, 1440]) {
+    test(`desktop layout floats the sidebar on the right at ${width}px`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto('/');
 
-    const sidebar = page.getByRole('complementary', { name: 'Fields' });
-    const main = page.getByRole('main');
-    await expect(sidebar).toBeVisible();
-    const sidebarBox = await sidebar.boundingBox();
-    const mainBox = await main.boundingBox();
-    expect(sidebarBox?.x).toBe(0);
-    expect((mainBox?.x ?? 0) >= (sidebarBox?.width ?? 0)).toBe(true);
-    expect((mainBox?.x ?? 0) + (mainBox?.width ?? 0)).toBeCloseTo(1440, 0);
-    await expect(page.getByRole('button', { name: 'Fields' })).toHaveCount(0);
-  });
+      const sidebar = page.getByRole('complementary', { name: 'Fields' });
+      await expect(sidebar).toBeVisible();
+      const sidebarBox = await sidebar.boundingBox();
+      const mainBox = await page.getByRole('main').boundingBox();
+      const headerBox = await page.getByRole('banner').boundingBox();
+      if (!sidebarBox || !mainBox || !headerBox) throw new Error('Missing layout region');
+      expect(sidebarBox.x - (mainBox.x + mainBox.width)).toBe(12);
+      expect(width - (sidebarBox.x + sidebarBox.width)).toBe(12);
+      expect(sidebarBox.y - (headerBox.y + headerBox.height)).toBe(12);
+      expect(900 - (sidebarBox.y + sidebarBox.height)).toBe(12);
+      expect(sidebarBox.width).toBe(320);
+      expect(mainBox.width).toBeGreaterThan(0);
+      const surface = await sidebar.evaluate((element) => {
+        const style = getComputedStyle(element);
+        return { radius: style.borderRadius, shadow: style.boxShadow, border: style.borderLeftWidth };
+      });
+      expect(surface.radius).toBe('16px');
+      expect(surface.shadow).not.toBe('none');
+      expect(surface.border).toBe('0px');
+      await expect(page.getByRole('button', { name: 'Fields' })).toHaveCount(0);
 
-  test('mobile layout uses a bottom sheet without horizontal page scroll', async ({ page }) => {
-    await page.setViewportSize({ width: 360, height: 740 });
-    await page.goto('/');
+      await sidebar.evaluate((element) => {
+        const content = document.createElement('button');
+        content.textContent = 'Last test field';
+        content.style.marginTop = '1600px';
+        element.append(content);
+      });
+      const lastField = sidebar.getByRole('button', { name: 'Last test field' });
+      await lastField.focus();
+      await expect(lastField).toBeInViewport();
+      expect(await sidebar.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
+    });
+  }
 
-    await expect(page.getByRole('complementary', { name: 'Fields' })).toHaveCount(0);
-    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
-    expect(overflow).toBe(0);
+  for (const width of [360, 767]) {
+    test(`mobile layout uses a rounded bottom sheet without horizontal page scroll at ${width}px`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 740 });
+      await page.goto('/');
 
-    await page.getByRole('button', { name: 'Fields' }).click();
-    const sheet = page.getByRole('dialog', { name: 'Fields' });
-    await expect(sheet).toBeVisible();
-    await expect
-      .poll(async () => {
-        const box = await sheet.boundingBox();
-        return Math.round((box?.y ?? 0) + (box?.height ?? 0));
-      })
-      .toBe(740);
+      await expect(page.getByRole('complementary', { name: 'Fields' })).toHaveCount(0);
+      const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+      expect(overflow).toBe(0);
 
-    await page.setViewportSize({ width: 1024, height: 740 });
-    await expect(sheet).toHaveCount(0);
-    await expect(page.getByRole('complementary', { name: 'Fields' })).toBeVisible();
-  });
+      const fields = page.getByRole('button', { name: 'Fields' });
+      await expect(fields).toHaveCSS('border-radius', '999px');
+      await fields.click();
+      const sheet = page.getByRole('dialog', { name: 'Fields' });
+      await expect(sheet).toBeVisible();
+      await expect(sheet).toHaveCSS('border-top-left-radius', '16px');
+      await expect(sheet).toHaveCSS('border-top-right-radius', '16px');
+      await expect(sheet).toHaveCSS('border-bottom-left-radius', '0px');
+      await expect
+        .poll(async () => {
+          const box = await sheet.boundingBox();
+          return Math.round((box?.y ?? 0) + (box?.height ?? 0));
+        })
+        .toBe(740);
+
+      await page.keyboard.press('Escape');
+      await expect(sheet).toHaveCount(0);
+      await expect(fields).toBeFocused();
+      await fields.click();
+      await expect(sheet).toBeVisible();
+      await page.setViewportSize({ width: 1024, height: 740 });
+      await expect(sheet).toHaveCount(0);
+      await expect(page.getByRole('complementary', { name: 'Fields' })).toBeVisible();
+    });
+  }
 
   test('bundled fonts render accented Latin characters without fallback', async ({ page }) => {
     await page.goto('/');
