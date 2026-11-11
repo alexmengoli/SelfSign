@@ -23,6 +23,8 @@ html {
   --app-panel-radius: 16px;
   --app-surface-gap: 12px;
   --app-panel-shadow: 0 2px 6px rgb(0 0 0 / 12%), 0 8px 24px rgb(0 0 0 / 6%);
+  --app-logotype-light-display: block;
+  --app-logotype-dark-display: none;
 
   color-scheme: light dark;
 
@@ -95,8 +97,20 @@ app-theme-toggle {
 }
 
 .app-fields-sheet .mat-bottom-sheet-container {
+  width: 100vw;
+  min-width: 100vw;
+  max-width: 100vw;
+  max-height: none;
+  overflow: visible;
+  padding: 0;
   border-radius: var(--app-panel-radius) var(--app-panel-radius) 0 0;
   box-shadow: var(--app-panel-shadow);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-fields-sheet .mat-bottom-sheet-container.mat-bottom-sheet-container-animations-enabled {
+    animation-duration: 1ms;
+  }
 }
 
 html[data-theme='light'] {
@@ -104,7 +118,17 @@ html[data-theme='light'] {
 }
 
 html[data-theme='dark'] {
+  --app-logotype-light-display: none;
+  --app-logotype-dark-display: block;
+
   color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme]) {
+    --app-logotype-light-display: none;
+    --app-logotype-dark-display: block;
+  }
 }
 
 html,

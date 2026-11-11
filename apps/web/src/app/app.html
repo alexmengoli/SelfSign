@@ -1,12 +1,10 @@
 <header class="app-header">
   <div class="brand">
-    <img class="logo" src="favicon.svg" alt="" width="28" height="28" />
-    <span class="name">SelfSign</span>
+    <img class="brand-symbol" src="branding/selfsign-logo.svg" alt="" width="32" height="32" />
+    <img class="brand-logo brand-logo-light" src="branding/selfsign-logotype-light.svg" alt="SelfSign" width="100" height="35" />
+    <img class="brand-logo brand-logo-dark" src="branding/selfsign-logotype-dark.svg" alt="SelfSign" width="100" height="35" />
   </div>
   <span class="spacer"></span>
-  @if (layout.isMobile()) {
-    <button matButton="tonal" type="button" class="fields-button" (click)="openFields()">Fields</button>
-  }
   <app-theme-toggle />
 </header>
 
@@ -20,3 +18,20 @@
     </aside>
   }
 </div>
+
+@if (layout.isMobile()) {
+  <button
+    #fieldsFab
+    matFab
+    type="button"
+    class="fields-fab"
+    [class.fields-fab-sheet-active]="fieldsOpen()"
+    aria-label="Fields"
+    aria-haspopup="dialog"
+    [attr.aria-expanded]="fieldsOpen()"
+    matTooltip="Fields"
+    (click)="openFields()"
+  >
+    <mat-icon svgIcon="fields" />
+  </button>
+}

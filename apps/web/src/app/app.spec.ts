@@ -11,7 +11,15 @@ describe('App', () => {
     await fixture.whenStable();
     const element = fixture.nativeElement as HTMLElement;
 
-    expect(element.querySelector('header')?.textContent).toContain('SelfSign');
+    const logos = [...element.querySelectorAll<HTMLImageElement>('header img[alt="SelfSign"]')];
+    expect(logos.map((image) => image.getAttribute('src'))).toEqual([
+      'branding/selfsign-logotype-light.svg',
+      'branding/selfsign-logotype-dark.svg',
+    ]);
+    expect(element.querySelector('header')?.textContent?.trim()).toBe('');
+    const symbol = element.querySelector<HTMLImageElement>('.brand-symbol');
+    expect(symbol?.getAttribute('src')).toBe('branding/selfsign-logo.svg');
+    expect(symbol?.alt).toBe('');
     const labels = [...element.querySelectorAll('mat-button-toggle button')].map((button) => button.getAttribute('aria-label'));
     expect(labels).toEqual(['System', 'Light', 'Dark']);
   });
