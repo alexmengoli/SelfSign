@@ -1,0 +1,16 @@
+**/node_modules
+**/dist
+**/.angular
+**/out-tsc
+**/*.tsbuildinfo
+data
+apps/server/data
+test-results
+playwright-report
+e2e
+.git
+.agents
+u-spec
+Dockerfile
+docker-compose.yml
+.dockerignore

@@ -1,0 +1,34 @@
+{
+  "name": "selfsign",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Self-hosted web app to fill and visually sign PDFs entirely in the browser.",
+  "license": "MIT",
+  "type": "module",
+  "workspaces": [
+    "packages/shared",
+    "apps/server",
+    "apps/web"
+  ],
+  "engines": {
+    "node": ">=24.15.0"
+  },
+  "scripts": {
+    "dev": "npm run build -w @selfsign/shared && concurrently -k -n server,web -c blue,magenta \"npm run dev -w @selfsign/server\" \"npm run dev -w @selfsign/web\"",
+    "build": "npm run build -w @selfsign/shared && npm run build -w @selfsign/server && npm run build -w @selfsign/web",
+    "lint": "eslint .",
+    "test": "npm test -w @selfsign/shared && npm test -w @selfsign/server && npm test -w @selfsign/web",
+    "e2e": "npm run build && playwright test"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.65.0",
+    "@types/node": "26.6.6",
+    "angular-eslint": "22.6.0",
+    "concurrently": "10.0.7",
+    "eslint": "10.14.0",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.2",
+    "vitest": "5.1.0"
+  }
+}

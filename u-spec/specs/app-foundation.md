@@ -1,7 +1,5 @@
 # app-foundation: Project stack, container, theme and shared UI rules
 Scope: global
-Status: ready
-Base: new
 
 ## Goal
 Bootstrap SelfSign, a self-hosted web app that visually signs and fills PDFs entirely in the browser.
@@ -20,32 +18,3 @@ certificates) and authentication are out of scope.
 - R8: Fonts `Noto Sans` (default), `Noto Serif` and `Caveat` (all OFL) are bundled locally, used both for on-screen rendering of text elements and for export, and support Latin characters including `àèéìòùÀÈÉÌÒÙ`.
 - R9: `README.md` documents: purpose, privacy model (files never leave the browser), `docker compose` quick start, env vars (`PORT`, `DATA_DIR`), volume permissions for the non-root user, multi-arch build via `docker buildx build --platform linux/amd64,linux/arm64`, local development, and a security note that there is no authentication so anyone reaching the port can read/modify saved data (including signature images) and the service should be kept on a trusted network or behind a reverse proxy/VPN with auth.
 - R10: Test tooling: Vitest for `apps/web`, `apps/server` and `packages/shared`; Playwright for E2E against the built server. Each area spec adds its own tests.
-
-## Approach
-- Layout: `apps/web`, `apps/server`, `packages/shared`, root `package.json` workspaces, root `tsconfig.base.json`, ESLint (angular-eslint + typescript-eslint).
-- Server: Fastify with `@fastify/static` for the web build, `@fastify/helmet` (or explicit hooks) for headers. Config read from env only.
-- Web: Angular with Material M3 theme via CSS variables; `color-scheme` handled by a `ThemeService` toggling a class on `<html>`; fonts as local `@font-face` assets (woff2 for screen, TTF copies in assets for export embedding).
-- Docker: build stage (`node:<lts>`), runtime stage (`node:<lts>-alpine`), `USER node`, only production deps of the server plus the web build.
-- Order of application: `app-foundation` → `field-library` → `pdf-viewer` → `pdf-export`.
-
-## Tasks
-- [ ] T1: Create the monorepo skeleton, shared tsconfig, lint config and root scripts (R1, R10)
-- [ ] T2: Implement the Fastify server: static SPA serving, `/api/health`, `PORT`/`DATA_DIR` config, security headers (R2, R4)
-- [ ] T3: Create the Angular app shell: header, sidebar slot, document slot, responsive breakpoint, Material M3 minimal theme, English texts (R5, R7)
-- [ ] T4: Implement the theme control with `System`/`Light`/`Dark`, live OS sync and `localStorage` persistence (R6)
-- [ ] T5: Bundle Noto Sans, Noto Serif, Caveat locally for screen and export use (R4, R8)
-- [ ] T6: Add `Dockerfile`, `.dockerignore`, `docker-compose.yml` with healthcheck, non-root user, `/data` volume (R3)
-- [ ] T7: Set up Vitest and Playwright and write foundation tests (R2, R4, R6, R7, R10)
-- [ ] T8: Write `README.md` (R9)
-
-## Verification
-- R1: `npm ci && npm run lint && npm run build && npm test` exit 0 | not run
-- R2: Vitest/Fastify inject: `GET /api/health` → 200 `{"status":"ok"}`; `GET /some/route` → `index.html`; `PORT=9000` listens on 9000; missing `DATA_DIR` is created | not run
-- R3: `docker compose up -d --build` → container healthy, `http://localhost:8080` loads; `docker inspect` user is non-root; `docker buildx build --platform linux/amd64,linux/arm64 .` succeeds; data persists after recreate | not run
-- R4: Playwright: record all requests during load/edit/export of a PDF → none to external origins and none with PDF bytes; response headers include CSP and `nosniff` | not run
-- R5: Manual review of all screens and Playwright snapshots: English only | not run
-- R6: Playwright `emulateMedia({ colorScheme })` with `System` follows dark/light; selecting `Dark` persists after reload | not run
-- R7: Playwright at 1440px shows sidebar left; at 360px no horizontal page scroll and bottom-sheet mode is active | not run
-- R8: Rendering test with `àèéìòù` in each font shows no missing glyphs on screen | not run
-- R9: README review covers every listed topic | not run
-- R10: `npm test` and `npm run e2e` run Vitest and Playwright suites | not run

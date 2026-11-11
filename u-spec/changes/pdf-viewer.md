@@ -23,6 +23,7 @@ Sidebar items are defined by `field-library`; file generation by `pdf-export`.
 - R12: Desktop shortcuts (not while editing text, except Esc): Ctrl/Cmd+Z undo; Ctrl/Cmd+Shift+Z and Ctrl+Y redo; Delete/Backspace delete selected; arrows nudge 1 pt, Shift+arrows 10 pt; Ctrl/Cmd+D duplicate; Esc ends editing or deselects.
 - R13: Undo/Redo toolbar buttons and shortcuts cover add, move, resize, rotate, style change, text edit (one step per editing session), duplicate and delete; history keeps the last 100 steps and resets when the document is closed.
 - R14: When at least one element is placed, closing/reloading the tab triggers the browser `beforeunload` warning. `Close document` asks `Discard changes and close this document?` (no confirm if no elements) and returns to the drop zone. Document and elements are kept only in memory.
+- R15: Opening, rendering and editing a PDF (including placing saved images) send no request containing PDF bytes and no request to external origins, per global `app-foundation` R4.
 
 ## Approach
 - `pdfjs-dist` with bundled worker for rendering; per-page canvas plus an overlay layer for elements; `IntersectionObserver` for lazy rendering and current-page tracking.
@@ -42,6 +43,7 @@ Sidebar items are defined by `field-library`; file generation by `pdf-export`.
 - [ ] T9: Implement undo/redo history and keyboard shortcuts (R12, R13)
 - [ ] T10: Implement `Close document` and `beforeunload` handling (R14)
 - [ ] T11: Write Vitest tests (coordinate conversion, clamping, history) and Playwright flows on desktop and mobile viewports (R1–R14)
+- [ ] T12: Add a Playwright network-privacy test covering open, render, place, edit and close (R15)
 
 ## Verification
 - R1: Playwright: drop PDF on window and pick via dialog → pages render | not run
@@ -58,3 +60,4 @@ Sidebar items are defined by `field-library`; file generation by `pdf-export`.
 - R12: Playwright: each shortcut performs its action; Delete while editing text deletes characters only | not run
 - R13: Vitest history: 101 actions keep 100; Playwright: undo/redo each operation type | not run
 - R14: Playwright: with elements, `beforeunload` dialog fires; `Close document` confirm returns to drop zone; without elements no confirm | not run
+- R15: Playwright: record all requests while opening a fixture PDF, navigating, zooming, placing/editing text and image elements and closing → every URL is same-origin, no request body contains the PDF header `%PDF-` or the fixture bytes, and no non-GET request except saved-value API calls | not run

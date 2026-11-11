@@ -1,0 +1,36 @@
+// @ts-check
+import eslint from '@eslint/js';
+import angular from 'angular-eslint';
+import { defineConfig } from 'eslint/config';
+import tseslint from 'typescript-eslint';
+
+export default defineConfig(
+  {
+    ignores: [
+      '**/dist/**',
+      '**/node_modules/**',
+      '**/.angular/**',
+      'data/**',
+      'apps/server/data/**',
+      'test-results/**',
+      'playwright-report/**',
+    ],
+  },
+  {
+    files: ['**/*.ts', '**/*.mjs'],
+    extends: [eslint.configs.recommended, tseslint.configs.recommended],
+  },
+  {
+    files: ['apps/web/src/**/*.ts'],
+    extends: [angular.configs.tsRecommended],
+    processor: angular.processInlineTemplates,
+    rules: {
+      '@angular-eslint/component-selector': ['error', { type: 'element', prefix: 'app', style: 'kebab-case' }],
+      '@angular-eslint/directive-selector': ['error', { type: 'attribute', prefix: 'app', style: 'camelCase' }],
+    },
+  },
+  {
+    files: ['apps/web/src/**/*.html'],
+    extends: [angular.configs.templateRecommended, angular.configs.templateAccessibility],
+  },
+);

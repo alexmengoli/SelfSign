@@ -1,0 +1,22 @@
+<header class="app-header">
+  <div class="brand">
+    <img class="logo" src="favicon.svg" alt="" width="28" height="28" />
+    <span class="name">SelfSign</span>
+  </div>
+  <span class="spacer"></span>
+  @if (layout.isMobile()) {
+    <button matButton="tonal" type="button" class="fields-button" (click)="openFields()">Fields</button>
+  }
+  <app-theme-toggle />
+</header>
+
+<div class="app-body" [class.mobile]="layout.isMobile()">
+  @if (!layout.isMobile()) {
+    <aside class="app-sidebar" aria-label="Fields">
+      <app-sidebar />
+    </aside>
+  }
+  <main class="app-document">
+    <p class="empty">Open a PDF to get started.</p>
+  </main>
+</div>

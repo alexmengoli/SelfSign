@@ -1,0 +1,10 @@
+services:
+  selfsign:
+    image: selfsign:latest
+    build: .
+    container_name: selfsign
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
