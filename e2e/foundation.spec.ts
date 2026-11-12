@@ -556,6 +556,9 @@ test.describe('foundation', () => {
 
   test('bundled fonts render accented Latin characters without fallback', async ({ page }) => {
     await page.goto('/');
+    // The fonts are registered from script after startup, not declared in CSS.
+    await page.waitForFunction(() => ['Noto Sans', 'Noto Serif', 'Caveat'].every((family) =>
+      [...document.fonts].some((face) => face.family.replaceAll('"', '') === family && face.status === 'loaded')));
 
     const missing = await page.evaluate(async () => {
       const families = ['Noto Sans', 'Noto Serif', 'Caveat'];

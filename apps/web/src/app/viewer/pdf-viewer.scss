@@ -65,8 +65,16 @@ app-drop-zone {
   text-align: center;
 }
 
-.close {
+.export {
   margin-inline-start: auto;
+}
+
+.export-progress {
+  --mat-progress-spinner-active-indicator-color: currentColor;
+
+  display: inline-block;
+  margin-inline-end: 8px;
+  vertical-align: middle;
 }
 
 .scroller {

@@ -36,7 +36,8 @@
                 "output": "/"
               }
             ],
-            "styles": ["src/styles.scss"]
+            "styles": ["src/styles.scss"],
+            "allowedCommonJsDependencies": ["pako"]
           },
           "configurations": {
             "production": {
@@ -73,7 +74,7 @@
         "serve": {
           "builder": "@angular/build:dev-server",
           "options": {
-            "proxyConfig": "proxy.conf.json"
+            "proxyConfig": "proxy.conf.cjs"
           },
           "configurations": {
             "production": {

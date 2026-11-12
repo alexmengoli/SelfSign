@@ -1,7 +1,9 @@
 import { buildApp } from './app.js';
 import { loadConfig } from './config.js';
 
-const config = loadConfig();
+const config = loadConfig(
+  process.argv.includes('--dev') ? { ...process.env, PORT: process.env['PORT'] || '9000' } : process.env,
+);
 const app = await buildApp({ dataDir: config.dataDir, webRoot: config.webRoot, logger: true });
 
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {

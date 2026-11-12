@@ -15,9 +15,14 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule, MatIconRegistry } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { DomSanitizer } from '@angular/platform-browser';
+import { registerDocumentFonts } from '../core/font-files';
+import { downloadPdf } from '../export/download';
+import { exportFileName } from '../export/export-geometry';
+import { exportPdf, preloadPdfExport } from '../export/pdf-export';
 import { FieldLibraryService, type FieldPlacement } from '../sidebar/field-library.service';
 import { ConfirmCloseDialog } from './close-dialog';
 import { DropZone } from './drop-zone';
@@ -47,10 +52,11 @@ import {
 import { clampZoom, computeLayout, currentPageIndex, fitPageZoom, fitWidthZoom, MAX_ZOOM, MIN_ZOOM, nearestPageAnchor, nextZoomPreset, pageIndexAt, pageScrollTop, visiblePageRange } from './layout';
 import { PdfPage } from './pdf-page';
 import { INVALID_PDF_MESSAGE, openPdf, PdfOpenError, type PageSize } from './pdf-source';
-import { loadDocumentFonts, measureTextBox } from './text-metrics';
+import { measureTextBox } from './text-metrics';
 import { registerViewerIcons } from './viewer-icons';
 
 const DRAG_THRESHOLD_PX = 3;
+const EXPORT_FAILED_MESSAGE = 'Export failed. Your document was not changed.';
 const DOUBLE_TAP_MS = 350;
 const DOUBLE_TAP_PX = 24;
 /** Room kept free above and below a selected element for its rotate handle. */
@@ -142,7 +148,7 @@ function touchDistance(touches: TouchList): number {
 
 @Component({
   selector: 'app-pdf-viewer',
-  imports: [DropZone, ElementToolbar, MatButtonModule, MatIconModule, MatTooltipModule, PdfPage],
+  imports: [DropZone, ElementToolbar, MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatTooltipModule, PdfPage],
   providers: [DocumentStore],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './pdf-viewer.html',
@@ -166,6 +172,8 @@ export class PdfViewer {
   private readonly editor = viewChild<ElementRef<HTMLTextAreaElement>>('editor');
 
   protected readonly opening = signal(false);
+  protected readonly exporting = signal(false);
+  protected readonly canExport = computed(() => this.store.elements().length > 0);
   protected readonly openError = signal<string | null>(null);
   protected readonly fileDragActive = signal(false);
   protected readonly zoomMode = signal<ZoomMode>('fitWidth');
@@ -354,10 +362,11 @@ export class PdfViewer {
     try {
       const buffer = await file.arrayBuffer();
       const opened = await openPdf(buffer);
-      await loadDocumentFonts();
+      await registerDocumentFonts();
       this.store.open({ name: file.name, buffer, ...opened });
       this.zoomMode.set('fitWidth');
       this.fieldLibrary.documentLoaded.set(true);
+      preloadPdfExport();
     } catch (error) {
       if (!(error instanceof PdfOpenError)) console.error('PDF could not be opened:', error);
       this.openError.set(error instanceof PdfOpenError ? error.message : INVALID_PDF_MESSAGE);
@@ -377,6 +386,23 @@ export class PdfViewer {
       .subscribe((confirmed) => {
         if (confirmed) this.closeDocument();
       });
+  }
+
+  /** Builds the signed copy in the browser; the open document and its elements stay as they are. */
+  protected async exportDocument(): Promise<void> {
+    const loaded = this.store.document();
+    if (!loaded || this.exporting() || !this.canExport()) return;
+    this.exporting.set(true);
+    try {
+      this.store.endTextEdit();
+      const bytes = await exportPdf({ buffer: loaded.buffer, pages: loaded.pages, elements: this.store.elements() });
+      if (this.store.document() === loaded) downloadPdf(bytes, exportFileName(loaded.name));
+    } catch (error) {
+      console.error('PDF export failed:', error);
+      this.snackBar.open(EXPORT_FAILED_MESSAGE, 'Close', { duration: 8000 });
+    } finally {
+      this.exporting.set(false);
+    }
   }
 
   protected onScroll(event: Event): void {

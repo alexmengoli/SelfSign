@@ -83,8 +83,10 @@ Requirements: Node.js Active LTS (see `.nvmrc`, `>=24.15` supported) and npm.
 
 ```sh
 npm ci
-npm run dev        # API on http://localhost:8080, web app with live reload on http://localhost:4200
+npm run dev        # API on http://localhost:9000, web app with live reload on http://localhost:4200
 ```
+
+In development, set `PORT` before running the command to change the API port; the web proxy uses the same value.
 
 | Command         | Description                                                    |
 | --------------- | -------------------------------------------------------------- |

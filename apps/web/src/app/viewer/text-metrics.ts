@@ -1,5 +1,3 @@
-import { DOCUMENT_FONTS } from '../core/document-fonts';
-
 /** Line height as a multiple of the font size; shared by on-screen text and measured text boxes. */
 export const TEXT_LINE_HEIGHT = 1.25;
 /** Width of an empty text element in font-size units, so it stays easy to click and edit. */
@@ -37,9 +35,12 @@ export function measureTextBox(text: string, family: string, fontSize: number): 
   };
 }
 
-/** Loads the bundled fonts so measurements and on-screen text use the real glyphs. */
-export async function loadDocumentFonts(): Promise<void> {
-  await Promise.all(
-    DOCUMENT_FONTS.map((font) => document.fonts.load(`12px "${font.family}"`).catch(() => [])),
-  );
+/** Ascent and descent per unit of font size that the browser uses to lay out lines of this font. */
+export function measureFontVerticalMetrics(family: string): { ascent: number; descent: number } {
+  const size = 100;
+  const context = getMeasuringContext();
+  if (!context) return { ascent: 0.8, descent: 0.2 };
+  context.font = `${size}px "${family}"`;
+  const metrics = context.measureText('');
+  return { ascent: metrics.fontBoundingBoxAscent / size, descent: metrics.fontBoundingBoxDescent / size };
 }

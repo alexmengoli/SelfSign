@@ -76,6 +76,24 @@
       </button>
     </div>
 
+    <button
+      mat-flat-button
+      type="button"
+      class="export"
+      [disabled]="!canExport() || exporting()"
+      [disabledInteractive]="true"
+      [matTooltip]="canExport() ? '' : 'Place at least one field to export'"
+      [attr.aria-busy]="exporting()"
+      (click)="exportDocument()"
+    >
+      @if (exporting()) {
+        <mat-progress-spinner class="export-progress" mode="indeterminate" diameter="18" aria-hidden="true" />
+        Exporting…
+      } @else {
+        Export
+      }
+    </button>
+
     <button mat-button type="button" class="close" (click)="requestClose()">Close document</button>
   </div>
 

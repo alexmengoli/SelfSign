@@ -1,23 +1,5 @@
 @use '@angular/material' as mat;
 
-@font-face {
-  font-family: 'Noto Sans';
-  src: url('/fonts/NotoSans-Regular.ttf') format('truetype');
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Noto Serif';
-  src: url('/fonts/NotoSerif-Regular.ttf') format('truetype');
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Caveat';
-  src: url('/fonts/Caveat-Regular.ttf') format('truetype');
-  font-display: swap;
-}
-
 html {
   --app-control-radius: 999px;
   --app-panel-radius: 16px;
