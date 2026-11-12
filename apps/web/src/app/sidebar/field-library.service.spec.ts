@@ -43,6 +43,17 @@ describe('FieldLibraryService', () => {
     subscription.unsubscribe();
   });
 
+  it('places saved images from their URL so the viewer loads the bytes', () => {
+    service.documentLoaded.set(true);
+    const placements: unknown[] = [];
+    const subscription = service.placementRequests.subscribe((placement) => placements.push(placement));
+
+    service.placeValue({ id: 'value-2', kind: 'image', label: 'Signature', imageId: 'image-2', mimeType: 'image/png' });
+
+    expect(placements).toEqual([{ kind: 'image', imageUrl: '/api/images/image-2' }]);
+    subscription.unsubscribe();
+  });
+
   it('uses the default format when settings cannot be loaded', async () => {
     const loading = service.loadSettings();
     http.expectOne('/api/settings').flush('unavailable', { status: 500, statusText: 'Server Error' });

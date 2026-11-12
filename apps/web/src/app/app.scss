@@ -86,19 +86,12 @@
 }
 
 .app-document {
-  display: grid;
-  place-items: center;
+  display: flex;
+  flex-direction: column;
   min-width: 0;
   min-height: 0;
-  overflow: auto;
+  overflow: hidden;
   background: var(--mat-sys-surface-container);
-}
-
-.empty {
-  margin: 0;
-  padding: 24px;
-  color: var(--mat-sys-on-surface-variant);
-  text-align: center;
 }
 
 @media (max-width: 767.98px) {

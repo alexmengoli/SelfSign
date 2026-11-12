@@ -30,6 +30,6 @@ describe('App', () => {
     const element = fixture.nativeElement as HTMLElement;
 
     expect(element.querySelector('aside[aria-label="Fields"] app-sidebar')).not.toBeNull();
-    expect(element.querySelector('main')?.textContent).toContain('Open a PDF to get started.');
+    expect(element.querySelector('main')?.textContent).toContain('Drop a PDF here or click to browse');
   });
 });

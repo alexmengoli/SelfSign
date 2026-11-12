@@ -3,6 +3,7 @@ dist/
 .angular/
 /data/
 /apps/server/data/
+/apps/web/pdfjs-assets/
 test-results/
 playwright-report/
 *.tsbuildinfo

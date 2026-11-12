@@ -12,7 +12,7 @@ import {
 
 export type FieldPlacement =
   | { kind: 'text'; text: string }
-  | { kind: 'image'; imageBlob: Blob };
+  | { kind: 'image'; imageUrl: string };
 
 export type LoadState = 'loading' | 'ready' | 'error';
 
@@ -132,15 +132,16 @@ export class FieldLibraryService {
     this.placeText(formatDate(now, this.settings().dateFormat));
   }
 
-  async placeValue(value: SavedValue): Promise<void> {
+  placementFor(value: SavedValue): FieldPlacement {
+    return value.kind === 'text'
+      ? { kind: 'text', text: value.text ?? '' }
+      : { kind: 'image', imageUrl: this.imageUrl(value) };
+  }
+
+  placeValue(value: SavedValue): void {
     if (!this.documentLoaded()) return;
-    if (value.kind === 'text') {
-      this.placements.next({ kind: 'text', text: value.text ?? '' });
-      return;
-    }
-    if (!value.imageId) throw new Error('Image value is missing its image.');
-    const imageBlob = await firstValueFrom(this.http.get(this.imageUrl(value), { responseType: 'blob' }));
-    this.placements.next({ kind: 'image', imageBlob });
+    if (value.kind === 'image' && !value.imageId) throw new Error('Image value is missing its image.');
+    this.placements.next(this.placementFor(value));
   }
 }
 

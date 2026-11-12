@@ -240,7 +240,7 @@ test.describe('foundation', () => {
       await expect(page.getByRole('radio', { name })).toBeVisible();
     }
     await expect(page.getByRole('complementary', { name: 'Fields' })).toBeVisible();
-    await expect(page.getByRole('main')).toHaveText('Open a PDF to get started.');
+    await expect(page.getByRole('main')).toHaveText('Drop a PDF here or click to browse');
   });
 
   test('System theme follows the OS preference live', async ({ page }) => {

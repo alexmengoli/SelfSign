@@ -1,0 +1,180 @@
+@if (store.document(); as doc) {
+  <div class="toolbar" role="toolbar" aria-label="Document">
+    <span class="file-name" [title]="doc.name">{{ doc.name }}</span>
+
+    <div class="group" role="group" aria-label="Pages">
+      <button
+        mat-icon-button
+        type="button"
+        aria-label="Previous page"
+        matTooltip="Previous page"
+        [disabled]="currentIndex() === 0"
+        (click)="goToPage(currentIndex() - 1)"
+      >
+        <mat-icon svgIcon="viewer-chevron-left" />
+      </button>
+      <span class="page-indicator">
+        <input
+          class="page-input"
+          type="text"
+          inputmode="numeric"
+          aria-label="Page number"
+          [value]="currentIndex() + 1"
+          (keydown)="onPageInputKeydown($event)"
+          (blur)="resetPageInput($event)"
+        />
+        <span>/ {{ pageCount() }}</span>
+      </span>
+      <button
+        mat-icon-button
+        type="button"
+        aria-label="Next page"
+        matTooltip="Next page"
+        [disabled]="currentIndex() >= pageCount() - 1"
+        (click)="goToPage(currentIndex() + 1)"
+      >
+        <mat-icon svgIcon="viewer-chevron-right" />
+      </button>
+    </div>
+
+    <div class="group" role="group" aria-label="Zoom">
+      <button
+        mat-icon-button
+        type="button"
+        aria-label="Zoom out"
+        matTooltip="Zoom out"
+        [disabled]="zoom() <= minZoom"
+        (click)="changeZoom('custom', nextZoomPreset(zoom(), -1))"
+      >
+        <mat-icon svgIcon="viewer-zoom-out" />
+      </button>
+      <span class="zoom-value" aria-live="polite">{{ zoomPercent() }}%</span>
+      <button
+        mat-icon-button
+        type="button"
+        aria-label="Zoom in"
+        matTooltip="Zoom in"
+        [disabled]="zoom() >= maxZoom"
+        (click)="changeZoom('custom', nextZoomPreset(zoom(), 1))"
+      >
+        <mat-icon svgIcon="viewer-zoom-in" />
+      </button>
+      <button mat-button type="button" [attr.aria-pressed]="zoomMode() === 'fitWidth'" (click)="changeZoom('fitWidth', null)">
+        Fit width
+      </button>
+      <button mat-button type="button" [attr.aria-pressed]="zoomMode() === 'fitPage'" (click)="changeZoom('fitPage', null)">
+        Fit page
+      </button>
+    </div>
+
+    <div class="group" role="group" aria-label="History">
+      <button mat-icon-button type="button" aria-label="Undo" matTooltip="Undo" [disabled]="!store.canUndo()" (click)="store.undo()">
+        <mat-icon svgIcon="viewer-undo" />
+      </button>
+      <button mat-icon-button type="button" aria-label="Redo" matTooltip="Redo" [disabled]="!store.canRedo()" (click)="store.redo()">
+        <mat-icon svgIcon="viewer-redo" />
+      </button>
+    </div>
+
+    <button mat-button type="button" class="close" (click)="requestClose()">Close document</button>
+  </div>
+
+  <div class="scroller" #scroller (scroll)="onScroll($event)">
+    <div
+      class="content"
+      [style.width.px]="layout().width"
+      [style.height.px]="layout().height"
+      (pointerdown)="onContentPointerDown($event)"
+    >
+      @for (page of layout().pages; track $index; let index = $index) {
+        <div
+          class="page"
+          [attr.data-page-index]="index"
+          [style.left.px]="page.left"
+          [style.top.px]="page.top"
+          [style.width.px]="page.width"
+          [style.height.px]="page.height"
+        >
+          <app-pdf-page
+            [pdf]="doc.pdf"
+            [pageNumber]="index + 1"
+            [zoom]="zoom()"
+            [active]="index >= renderRange().first && index <= renderRange().last"
+          />
+        </div>
+      }
+
+      @for (view of elementViews(); track view.element.id) {
+        <div
+          class="element"
+          [class.selected]="view.selected"
+          [class.editing]="view.editing"
+          [attr.data-element-id]="view.element.id"
+          [attr.data-page-index]="view.element.pageIndex"
+          [style.left.px]="view.left"
+          [style.top.px]="view.top"
+          [style.width.px]="view.width"
+          [style.height.px]="view.height"
+          [style.transform]="'rotate(' + view.element.rotation + 'deg)'"
+        >
+          @if (view.element.kind === 'image') {
+            <img class="element-image" [src]="view.element.imageUrl" alt="" draggable="false" />
+          } @else if (view.element.kind === 'text' && view.editing) {
+            <textarea
+              #editor
+              class="element-text editor"
+              aria-label="Text"
+              [style.font-family]="view.fontFamily"
+              [style.font-size.px]="view.fontSize"
+              [style.color]="view.element.color"
+              (input)="onEditInput($event)"
+              (keydown)="onEditKeydown($event)"
+              (blur)="store.endTextEdit()"
+            ></textarea>
+          } @else if (view.element.kind === 'text') {
+            <div
+              class="element-text"
+              [style.font-family]="view.fontFamily"
+              [style.font-size.px]="view.fontSize"
+              [style.color]="view.element.color"
+            >{{ view.element.text }}</div>
+          }
+          @if (view.selected && !view.editing) {
+            <span class="handle handle-rotate" data-handle="rotate"></span>
+            <span class="handle handle-resize" data-handle="resize"></span>
+          }
+        </div>
+      }
+
+      @if (previewView(); as preview) {
+        <div
+          class="drop-preview"
+          [style.left.px]="preview.left"
+          [style.top.px]="preview.top"
+          [style.width.px]="preview.width"
+          [style.height.px]="preview.height"
+        ></div>
+      }
+
+      @if (selectedView(); as view) {
+        <app-element-toolbar
+          [element]="view.element"
+          [anchor]="view.anchor"
+          [bounds]="viewportRect()"
+          (fontChange)="store.setFont(view.element.id, $event)"
+          (sizeChange)="store.setFontSize(view.element.id, $event)"
+          (colorChange)="store.setColor(view.element.id, $event)"
+          (duplicate)="store.duplicate(view.element.id)"
+          (remove)="store.remove(view.element.id)"
+        />
+      }
+    </div>
+  </div>
+} @else {
+  <app-drop-zone
+    [busy]="opening()"
+    [error]="openError()"
+    [dragActive]="fileDragActive()"
+    (fileSelected)="openFile($event)"
+  />
+}

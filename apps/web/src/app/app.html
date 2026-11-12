@@ -10,15 +10,24 @@
 
 <div class="app-body" [class.mobile]="layout.isMobile()">
   <main
+    #documentList="cdkDropList"
+    id="document-drop-list"
     class="app-document"
     cdkDropList
-    [cdkDropListDisabled]="!fieldLibrary.documentLoaded()"
-    (cdkDropListDropped)="handleFieldDrop($event)"
+    (cdkDropListEntered)="viewer.dragEntered()"
+    (cdkDropListExited)="viewer.dragExited()"
+    (cdkDropListDropped)="viewer.dropPlacement($event)"
   >
-    <p class="empty">Open a PDF to get started.</p>
+    <app-pdf-viewer #viewer />
   </main>
   @if (!layout.isMobile()) {
-    <aside class="app-sidebar" aria-label="Fields">
+    <aside
+      class="app-sidebar"
+      aria-label="Fields"
+      cdkDropList
+      [cdkDropListConnectedTo]="[documentList]"
+      [cdkDropListSortingDisabled]="true"
+    >
       <app-sidebar />
     </aside>
   }

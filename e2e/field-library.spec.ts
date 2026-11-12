@@ -54,21 +54,19 @@ test.describe('field library', () => {
       };
       const rows = [...document.querySelectorAll('app-item-row')];
       const freeTextRow = rows.find((row) => row.querySelector('.item-text'));
-      const dateRow = rows.find((row) => row.querySelector('.date-label'));
+      const dateRow = rows.find((row) => row.querySelector('.date-value'));
       if (!freeTextRow || !dateRow) throw new Error('Missing text rows');
       return {
         slotX: rows.map((row) => [...row.querySelectorAll(':scope > .slot')].map((slot) => rect(slot).x)),
         freeTextLabel: rect(freeTextRow.querySelector('.item-text')),
-        dateLabel: rect(dateRow.querySelector('.date-label > span')),
-        datePreview: rect(dateRow.querySelector('.date-label > small')),
+        dateValue: rect(dateRow.querySelector('.date-value')),
         dateRow: rect(dateRow),
         formatButton: rect(dateRow.querySelector('[aria-label="Change date format"]')),
       };
     });
     for (const slots of layout.slotX) expect(slots).toEqual(layout.slotX[0]);
-    expect(layout.dateLabel.x).toBeCloseTo(layout.freeTextLabel.x, 0);
-    expect(layout.datePreview.x).toBeCloseTo(layout.dateLabel.x, 0);
-    expect(layout.datePreview.y).toBeGreaterThan(layout.dateLabel.bottom);
+    expect(layout.dateValue.x).toBeCloseTo(layout.freeTextLabel.x, 0);
+    expect(layout.dateValue.y + layout.dateValue.height / 2).toBeCloseTo(layout.dateRow.y + layout.dateRow.height / 2, 0);
     expect(layout.formatButton.y + layout.formatButton.height / 2).toBeCloseTo(layout.dateRow.y + layout.dateRow.height / 2, 0);
     const iconSizes = await page.evaluate(() => [...document.querySelectorAll('app-item-row mat-icon svg')].map((svg) => {
       const box = svg.getBoundingClientRect();
@@ -112,15 +110,16 @@ test.describe('field library', () => {
       `${dateParts.year}-${dateParts.month}-${dateParts.day}`,
       `${dateParts.day}.${dateParts.month}.${dateParts.year}`,
     ];
-    await expect(page.locator('.date-label small')).toHaveText(previews[0]!);
+    await expect(page.locator('.date-value')).toHaveText(previews[0]!);
+    await expect(page.getByText("Today's date", { exact: true })).toHaveCount(0);
     for (let index = 1; index <= 4; index++) {
       await cycleDateFormat.click();
-      await expect(page.locator('.date-label small')).toHaveText(previews[index % previews.length]!);
+      await expect(page.locator('.date-value')).toHaveText(previews[index % previews.length]!);
       const settings = await (await page.request.get('/api/settings')).json();
       expect(settings.dateFormat).toBe(['MM/dd/yyyy', 'yyyy-MM-dd', 'dd.MM.yyyy', 'dd/MM/yyyy'][index - 1]);
     }
     await page.reload();
-    await expect(page.locator('.date-label small')).toHaveText(previews[0]!);
+    await expect(page.locator('.date-value')).toHaveText(previews[0]!);
     await expect(page.getByRole('button', { name: 'Change date format' })).toBeVisible();
 
     const rows = page.locator('[aria-label="Saved text values"] app-item-row');
@@ -173,16 +172,24 @@ test.describe('field library', () => {
       const rows = [...document.querySelectorAll('app-item-row')];
       const imageRow = rows.find((row) => row.querySelector(`img[alt="${imageLabel}"]`));
       const freeTextRow = rows.find((row) => row.querySelector('.item-text'));
-      if (!imageRow || !freeTextRow) throw new Error('Missing rows');
+      const thumbnail = imageRow?.querySelector('img.thumbnail');
+      const freeTextLabel = freeTextRow?.querySelector('.item-text');
+      if (!imageRow || !freeTextRow || !thumbnail || !freeTextLabel) throw new Error('Missing rows');
       const slots = (row: Element) => [...row.querySelectorAll(':scope > .slot')];
       const rowBox = imageRow.getBoundingClientRect();
       return {
         imageColumns: slots(imageRow).map((slot) => rect(slot)),
         textColumns: slots(freeTextRow).map((slot) => rect(slot)),
+        thumbnailX: rect(thumbnail).x,
+        textX: rect(freeTextLabel).x,
         rowCenterY: rowBox.y + rowBox.height / 2,
-        controls: slots(imageRow).map((slot) => (slot.firstElementChild ? rect(slot.firstElementChild) : null)),
+        controls: slots(imageRow).map((slot) => {
+          const button = slot.querySelector('button');
+          return button ? rect(button) : null;
+        }),
       };
     }, label);
+    expect(alignment.thumbnailX).toBeCloseTo(alignment.textX, 0);
     alignment.imageColumns.forEach((column, index) => {
       expect(column.x).toBeCloseTo(alignment.textColumns[index]!.x, 0);
       expect(column.width).toBeCloseTo(alignment.textColumns[index]!.width, 0);
@@ -225,13 +232,12 @@ test.describe('field library', () => {
       };
       const rows = [...element.querySelectorAll('app-item-row')];
       const freeTextRow = rows.find((row) => row.querySelector('.item-text'));
-      const dateRow = rows.find((row) => row.querySelector('.date-label'));
+      const dateRow = rows.find((row) => row.querySelector('.date-value'));
       if (!freeTextRow || !dateRow) throw new Error('Missing text rows');
       return {
         slotX: rows.map((row) => [...row.querySelectorAll(':scope > .slot')].map((slot) => rect(slot).x)),
         freeTextLabel: rect(freeTextRow.querySelector('.item-text')),
-        dateLabel: rect(dateRow.querySelector('.date-label > span')),
-        datePreview: rect(dateRow.querySelector('.date-label > small')),
+        dateValue: rect(dateRow.querySelector('.date-value')),
         dateRow: rect(dateRow),
         formatButton: rect(dateRow.querySelector('[aria-label="Change date format"]')),
         width: element.scrollWidth,
@@ -239,9 +245,8 @@ test.describe('field library', () => {
       };
     });
     for (const slots of layout.slotX) expect(slots).toEqual(layout.slotX[0]);
-    expect(layout.dateLabel.x).toBeCloseTo(layout.freeTextLabel.x, 0);
-    expect(layout.datePreview.x).toBeCloseTo(layout.dateLabel.x, 0);
-    expect(layout.datePreview.y).toBeGreaterThan(layout.dateLabel.bottom);
+    expect(layout.dateValue.x).toBeCloseTo(layout.freeTextLabel.x, 0);
+    expect(layout.dateValue.y + layout.dateValue.height / 2).toBeCloseTo(layout.dateRow.y + layout.dateRow.height / 2, 0);
     expect(layout.formatButton.y + layout.formatButton.height / 2).toBeCloseTo(layout.dateRow.y + layout.dateRow.height / 2, 0);
     expect(layout.width).toBeLessThanOrEqual(layout.clientWidth);
     const label = `Mobile value ${Date.now()}`;
@@ -270,7 +275,7 @@ test.describe('field library', () => {
     await expect(page.getByRole('alert')).toHaveCount(2);
     await expect(page.getByRole('alert').first()).toContainText('Could not load saved values.');
     await expect(page.getByRole('button', { name: 'Retry' })).toHaveCount(2);
-    await expect(page.getByText("Today's date")).toBeVisible();
+    await expect(page.locator('.date-value')).toBeVisible();
     const label = `Recoverable ${Date.now()}`;
     await page.getByRole('button', { name: 'Add text' }).click();
     const dialog = page.getByRole('dialog', { name: 'Add value' });

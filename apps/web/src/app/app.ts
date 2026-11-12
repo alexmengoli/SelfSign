@@ -1,4 +1,4 @@
-import { CdkDragDrop, CdkDropList } from '@angular/cdk/drag-drop';
+import { CdkDropList } from '@angular/cdk/drag-drop';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, effect, inject, signal, viewChild } from '@angular/core';
 import { MatBottomSheet, MatBottomSheetModule } from '@angular/material/bottom-sheet';
 import { MatButtonModule } from '@angular/material/button';
@@ -8,12 +8,12 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { LayoutService } from './core/layout.service';
 import { ThemeToggle } from './shell/theme-toggle';
 import { FieldsSheet } from './sidebar/fields-sheet';
-import { FieldLibraryService, type FieldPlacement } from './sidebar/field-library.service';
 import { Sidebar } from './sidebar/sidebar';
+import { PdfViewer } from './viewer/pdf-viewer';
 
 @Component({
   selector: 'app-root',
-  imports: [CdkDropList, MatBottomSheetModule, MatButtonModule, MatIconModule, MatTooltipModule, Sidebar, ThemeToggle],
+  imports: [CdkDropList, MatBottomSheetModule, MatButtonModule, MatIconModule, MatTooltipModule, PdfViewer, Sidebar, ThemeToggle],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app.html',
   styleUrl: './app.scss',
@@ -21,7 +21,6 @@ import { Sidebar } from './sidebar/sidebar';
 export class App {
   protected readonly layout = inject(LayoutService);
   protected readonly fieldsOpen = signal(false);
-  protected readonly fieldLibrary = inject(FieldLibraryService);
   private readonly bottomSheet = inject(MatBottomSheet);
   private readonly changeDetector = inject(ChangeDetectorRef);
   private readonly fieldsFab = viewChild('fieldsFab', { read: ElementRef<HTMLButtonElement> });
@@ -58,10 +57,5 @@ export class App {
       this.changeDetector.detectChanges();
       this.fieldsFab()?.nativeElement.focus();
     });
-  }
-
-  protected handleFieldDrop(event: CdkDragDrop<unknown>): void {
-    const placement = event.item.data as FieldPlacement | undefined;
-    if (placement?.kind === 'text') this.fieldLibrary.placeText(placement.text);
   }
 }

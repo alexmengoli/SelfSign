@@ -10,6 +10,7 @@ export default defineConfig(
       '**/dist/**',
       '**/node_modules/**',
       '**/.angular/**',
+      'apps/web/pdfjs-assets/**',
       'data/**',
       'apps/server/data/**',
       'test-results/**',

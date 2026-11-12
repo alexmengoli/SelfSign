@@ -5,7 +5,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <span class="slot slot-move"><ng-content select="[rowMove]" /></span>
-    <span class="slot slot-lead"><ng-content select="[rowLead]" /></span>
+    <span class="slot slot-lead"></span>
     <span class="slot slot-content"><ng-content select="[rowContent]" /></span>
     <span class="slot"><ng-content select="[rowPlace]" /></span>
     <span class="slot"><ng-content select="[rowEdit]" /></span>

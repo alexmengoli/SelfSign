@@ -3,8 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "node scripts/copy-pdfjs-assets.mjs",
     "dev": "ng serve",
+    "prebuild": "node scripts/copy-pdfjs-assets.mjs",
     "build": "ng build",
+    "pretest": "node scripts/copy-pdfjs-assets.mjs",
     "test": "ng test --watch=false"
   },
   "dependencies": {
@@ -16,6 +19,7 @@
     "@angular/material": "22.2.7",
     "@angular/platform-browser": "22.2.6",
     "@selfsign/shared": "0.1.0",
+    "pdfjs-dist": "6.5.438",
     "rxjs": "7.8.2",
     "tslib": "2.9.1"
   },

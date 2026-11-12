@@ -1,0 +1,190 @@
+:host {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+app-drop-zone {
+  flex: 1;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+  background: var(--mat-sys-surface);
+}
+
+.file-name {
+  min-width: 0;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: var(--mat-sys-title-small);
+}
+
+.group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.page-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-label-large);
+}
+
+.page-input {
+  box-sizing: border-box;
+  width: 52px;
+  height: 32px;
+  padding: 0 6px;
+  border: 1px solid var(--mat-sys-outline);
+  border-radius: 8px;
+  background: var(--mat-sys-surface-container-highest);
+  color: var(--mat-sys-on-surface);
+  font: inherit;
+  text-align: center;
+}
+
+.zoom-value {
+  min-width: 48px;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-label-large);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.close {
+  margin-inline-start: auto;
+}
+
+.scroller {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  /* Pinch zoom is handled by the viewer; touch-action keeps the browser from zooming the page. */
+  touch-action: pan-x pan-y;
+  background: var(--mat-sys-surface-container);
+}
+
+.content {
+  position: relative;
+  user-select: none;
+}
+
+.page {
+  position: absolute;
+  background: #fff;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 30%);
+}
+
+.page app-pdf-page {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.element {
+  position: absolute;
+  box-sizing: border-box;
+  cursor: move;
+  touch-action: none;
+  transform-origin: 50% 50%;
+}
+
+.element.selected {
+  outline: 1.5px solid var(--mat-sys-primary);
+  outline-offset: 2px;
+}
+
+.element-text {
+  margin: 0;
+  padding: 0;
+  color: #000;
+  line-height: 1.25;
+  white-space: pre;
+}
+
+.editor {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  outline: 1px dashed var(--mat-sys-primary);
+  background: transparent;
+  resize: none;
+  overflow: hidden;
+  user-select: text;
+  cursor: text;
+}
+
+.element-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  user-select: none;
+}
+
+.handle {
+  position: absolute;
+  box-sizing: border-box;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--mat-sys-primary);
+  border-radius: 50%;
+  background: var(--mat-sys-surface);
+  touch-action: none;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -8px;
+  }
+}
+
+.handle-resize {
+  right: -7px;
+  bottom: -7px;
+  background: var(--mat-sys-primary);
+  cursor: nwse-resize;
+}
+
+.handle-rotate {
+  top: -32px;
+  left: calc(50% - 7px);
+  cursor: grab;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 14px;
+    left: 50%;
+    width: 1.5px;
+    height: 18px;
+    background: var(--mat-sys-primary);
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+}
+
+.drop-preview {
+  position: absolute;
+  box-sizing: border-box;
+  border: 2px dashed var(--mat-sys-primary);
+  background: color-mix(in srgb, var(--mat-sys-primary) 12%, transparent);
+  pointer-events: none;
+}

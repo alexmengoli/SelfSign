@@ -2,7 +2,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { defineConfig, devices } from '@playwright/test';
 
-const port = 4810;
+const port = Number(process.env['E2E_PORT'] ?? 4810);
 
 export default defineConfig({
   testDir: './e2e',

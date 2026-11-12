@@ -9,7 +9,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { DomSanitizer } from '@angular/platform-browser';
 import { type SavedValue } from '@selfsign/shared';
 import { LayoutService } from '../core/layout.service';
-import { FieldLibraryService, getApiErrorMessage } from './field-library.service';
+import { FieldLibraryService, getApiErrorMessage, type FieldPlacement } from './field-library.service';
 import { ItemRow } from './item-row';
 import { ConfirmDeleteDialog, ValueDialog, type ValueDialogData } from './value-dialog';
 
@@ -36,7 +36,7 @@ import { ConfirmDeleteDialog, ValueDialog, type ValueDialogData } from './value-
           [cdkDragData]="freeTextPlacement"
           [cdkDragDisabled]="!library.documentLoaded() || layout.isMobile()"
         >
-          <span rowMove class="placement-wrap" [matTooltip]="freeTextHint()">
+          <span rowMove class="placement-wrap" [matTooltip]="moveHint('Move Text')">
             <button
               mat-icon-button
               type="button"
@@ -58,11 +58,22 @@ import { ConfirmDeleteDialog, ValueDialog, type ValueDialogData } from './value-
           </span>
         </app-item-row>
 
-        <app-item-row>
-          <span rowContent class="date-label">
-            <span>Today's date</span>
-            <small>{{ library.todayPreview() }}</small>
+        <app-item-row
+          cdkDrag
+          [cdkDragData]="todayPlacement()"
+          [cdkDragDisabled]="!library.documentLoaded() || layout.isMobile()"
+          (cdkDragStarted)="refreshToday()"
+        >
+          <span rowMove class="placement-wrap" [matTooltip]="moveHint(todayMoveLabel)">
+            <button
+              mat-icon-button
+              type="button"
+              cdkDragHandle
+              [disabled]="!library.documentLoaded() || layout.isMobile()"
+              [attr.aria-label]="todayMoveLabel"
+            ><mat-icon svgIcon="move-field" /></button>
           </span>
+          <span rowContent class="date-value">{{ library.todayPreview() }}</span>
           <span rowPlace class="placement-wrap" [matTooltip]="placementHint()">
             <button
               mat-icon-button
@@ -87,9 +98,9 @@ import { ConfirmDeleteDialog, ValueDialog, type ValueDialogData } from './value-
           </div>
         }
 
-        <div cdkDropList class="saved-list" aria-label="Saved text values" (cdkDropListDropped)="reorder('text', $event)">
+        <div cdkDropList class="saved-list" aria-label="Saved text values" [cdkDropListConnectedTo]="layout.isMobile() ? [] : ['document-drop-list']" (cdkDropListDropped)="reorder('text', $event)">
           @for (value of textValues(); track value.id) {
-            <app-item-row cdkDrag>
+            <app-item-row cdkDrag [cdkDragData]="library.placementFor(value)">
               <button
                 rowMove
                 mat-icon-button
@@ -97,7 +108,7 @@ import { ConfirmDeleteDialog, ValueDialog, type ValueDialogData } from './value-
                 class="drag-handle"
                 cdkDragHandle
                 [attr.aria-label]="'Move ' + value.label"
-                matTooltip="Reorder"
+                matTooltip="Move"
               ><mat-icon svgIcon="move-field" /></button>
               <span rowContent class="saved-preview" [title]="value.text">{{ previewValue(value.text) }}</span>
               <span rowPlace class="placement-wrap" [matTooltip]="placementHint()">
@@ -137,9 +148,9 @@ import { ConfirmDeleteDialog, ValueDialog, type ValueDialogData } from './value-
         </div>
       }
 
-      <div cdkDropList class="saved-list" aria-label="Saved images" (cdkDropListDropped)="reorder('image', $event)">
+      <div cdkDropList class="saved-list" aria-label="Saved images" [cdkDropListConnectedTo]="layout.isMobile() ? [] : ['document-drop-list']" (cdkDropListDropped)="reorder('image', $event)">
         @for (value of imageValues(); track value.id) {
-          <app-item-row cdkDrag>
+          <app-item-row cdkDrag [cdkDragData]="library.placementFor(value)">
             <button
               rowMove
               mat-icon-button
@@ -147,9 +158,9 @@ import { ConfirmDeleteDialog, ValueDialog, type ValueDialogData } from './value-
               class="drag-handle"
               cdkDragHandle
               [attr.aria-label]="'Move ' + value.label"
-              matTooltip="Reorder"
+              matTooltip="Move"
             ><mat-icon svgIcon="move-field" /></button>
-            <img rowLead class="thumbnail" [src]="library.imageUrl(value)" [alt]="value.label" />
+            <img rowContent class="thumbnail" [src]="library.imageUrl(value)" [alt]="value.label" />
             <span rowPlace class="placement-wrap" [matTooltip]="placementHint()">
               <button
                 mat-icon-button
@@ -222,7 +233,8 @@ import { ConfirmDeleteDialog, ValueDialog, type ValueDialogData } from './value-
     }
 
     .item-text,
-    .saved-preview {
+    .saved-preview,
+    .date-value {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -230,18 +242,6 @@ import { ConfirmDeleteDialog, ValueDialog, type ValueDialogData } from './value-
 
     .saved-preview {
       color: var(--mat-sys-on-surface-variant);
-    }
-
-    .date-label {
-      display: grid;
-      justify-items: start;
-      gap: 2px;
-      min-width: 0;
-    }
-
-    .date-label small {
-      color: var(--mat-sys-on-surface-variant);
-      font: var(--mat-sys-body-small);
     }
 
     .load-error {
@@ -283,6 +283,8 @@ export class Sidebar {
   protected readonly library = inject(FieldLibraryService);
   protected readonly layout = inject(LayoutService);
   protected readonly freeTextPlacement = { kind: 'text', text: '' } as const;
+  protected readonly todayMoveLabel = "Move Today's date";
+  protected readonly todayPlacement = computed<FieldPlacement>(() => ({ kind: 'text', text: this.library.todayPreview() }));
   protected readonly textValues = computed(() => this.library.values().filter((value) => value.kind === 'text'));
   protected readonly imageValues = computed(() => this.library.values().filter((value) => value.kind === 'image'));
   private readonly dialog = inject(MatDialog);
@@ -316,9 +318,13 @@ export class Sidebar {
     return this.library.documentLoaded() ? '' : 'Open a PDF to place fields';
   }
 
-  protected freeTextHint(): string {
+  protected moveHint(label: string): string {
     if (!this.library.documentLoaded()) return 'Open a PDF to place fields';
-    return this.layout.isMobile() ? '' : 'Move Text';
+    return this.layout.isMobile() ? '' : label;
+  }
+
+  protected refreshToday(): void {
+    this.library.today.set(new Date());
   }
 
   protected previewValue(text?: string): string {
@@ -326,8 +332,13 @@ export class Sidebar {
   }
 
   protected placeFreeText(): void {
-    this.library.placeText('');
-    this.sheet?.dismiss();
+    if (!this.sheet) {
+      this.library.placeText('');
+      return;
+    }
+    // Place after the sheet restores focus, or the empty text ends editing and is discarded.
+    this.sheet.afterDismissed().subscribe(() => this.library.placeText(''));
+    this.sheet.dismiss();
   }
 
   protected placeToday(): void {
@@ -335,9 +346,9 @@ export class Sidebar {
     this.sheet?.dismiss();
   }
 
-  protected async placeSaved(value: SavedValue): Promise<void> {
+  protected placeSaved(value: SavedValue): void {
     try {
-      await this.library.placeValue(value);
+      this.library.placeValue(value);
       this.sheet?.dismiss();
     } catch (error) {
       this.snackBar.open(getApiErrorMessage(error, 'Could not load saved value.'), 'Close', { duration: 5000 });
