@@ -43,7 +43,7 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
     strictTransportSecurity: false,
   });
 
-  await app.register(registerApi);
+  await app.register(async (api) => registerApi(api, options.dataDir));
 
   const indexPath = path.join(options.webRoot, 'index.html');
   const indexHtml = existsSync(indexPath) ? await readFile(indexPath, 'utf8') : undefined;

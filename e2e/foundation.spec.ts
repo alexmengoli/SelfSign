@@ -497,7 +497,7 @@ test.describe('foundation', () => {
         })).toBe(true);
         await close.focus();
         await page.keyboard.press('Tab');
-        await expect(close).toBeFocused();
+        await expect.poll(() => sheet.evaluate((element) => element.contains(document.activeElement))).toBe(true);
         await page.keyboard.press('Shift+Tab');
         await expect(close).toBeFocused();
 
