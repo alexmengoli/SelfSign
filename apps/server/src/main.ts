@@ -4,7 +4,13 @@ import { loadConfig } from './config.js';
 const config = loadConfig(
   process.argv.includes('--dev') ? { ...process.env, PORT: process.env['PORT'] || '9000' } : process.env,
 );
-const app = await buildApp({ dataDir: config.dataDir, webRoot: config.webRoot, logger: true });
+const app = await buildApp({
+  dataDir: config.dataDir,
+  webRoot: config.webRoot,
+  logger: true,
+  password: config.password,
+  trustProxy: config.trustProxy,
+});
 
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {
   process.once(signal, () => {
@@ -15,6 +21,7 @@ for (const signal of ['SIGINT', 'SIGTERM'] as const) {
 try {
   await app.listen({ host: '0.0.0.0', port: config.port });
   app.log.info(`Data directory: ${config.dataDir}`);
+  app.log.info(`Authentication: ${config.password ? 'enabled' : 'disabled'}`);
 } catch (error) {
   app.log.error(error);
   process.exit(1);

@@ -40,6 +40,15 @@ export class FieldLibraryService {
     await Promise.all([this.loadValues(), this.loadSettings()]);
   }
 
+  /** Forgets saved data when access is locked. */
+  reset(): void {
+    this.values.set([]);
+    this.valuesState.set('loading');
+    this.settings.set({ dateFormat: DEFAULT_DATE_FORMAT });
+    this.settingsState.set('loading');
+    this.documentLoaded.set(false);
+  }
+
   async loadValues(): Promise<void> {
     this.valuesState.set('loading');
     try {

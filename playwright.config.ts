@@ -20,6 +20,8 @@ export default defineConfig({
     env: {
       PORT: String(port),
       DATA_DIR: path.join(tmpdir(), 'selfsign-e2e-data'),
+      // Shared-server suites run without authentication; authentication.spec.ts starts its own servers.
+      APP_PASSWORD: '',
     },
     reuseExistingServer: false,
   },

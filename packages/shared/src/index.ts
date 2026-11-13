@@ -4,6 +4,12 @@ export interface HealthResponse {
   status: 'ok';
 }
 
+export interface AuthStatus {
+  /** False when the server runs without `APP_PASSWORD`. */
+  enabled: boolean;
+  authenticated: boolean;
+}
+
 export const DATE_FORMATS = ['dd/MM/yyyy', 'MM/dd/yyyy', 'yyyy-MM-dd', 'dd.MM.yyyy'] as const;
 
 export type DateFormat = (typeof DATE_FORMATS)[number];

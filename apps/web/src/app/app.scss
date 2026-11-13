@@ -62,6 +62,10 @@
   flex: 1;
 }
 
+.auth-pending {
+  background: var(--mat-sys-surface-container);
+}
+
 .app-body {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 320px;

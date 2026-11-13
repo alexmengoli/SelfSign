@@ -19,6 +19,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { DomSanitizer } from '@angular/platform-browser';
+import { AuthService } from '../core/auth.service';
 import { registerDocumentFonts } from '../core/font-files';
 import { downloadPdf } from '../export/download';
 import { exportFileName } from '../export/export-geometry';
@@ -165,6 +166,7 @@ function touchDistance(touches: TouchList): number {
 export class PdfViewer {
   protected readonly store = inject(DocumentStore);
   private readonly fieldLibrary = inject(FieldLibraryService);
+  private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
   private readonly injector = inject(Injector);
@@ -769,6 +771,10 @@ export class PdfViewer {
   private async placeImageFromUrl(url: string, pageIndex: number, center: PointXY): Promise<void> {
     try {
       const response = await fetch(url);
+      if (response.status === 401) {
+        this.auth.handleUnauthorized();
+        return;
+      }
       if (!response.ok) throw new Error(`Image request failed with ${response.status}`);
       await this.placeImage(await response.blob(), pageIndex, center);
     } catch {

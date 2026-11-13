@@ -7,4 +7,9 @@ services:
       - "8080:8080"
     volumes:
       - ./data:/data
+    environment:
+      # Optional shared password; empty disables authentication. Set it here or in the shell/.env file.
+      APP_PASSWORD: ${APP_PASSWORD:-}
+      # Optional: trusted reverse proxy IPs/CIDRs (see README). Empty trusts none.
+      TRUST_PROXY: ${TRUST_PROXY:-}
     restart: unless-stopped

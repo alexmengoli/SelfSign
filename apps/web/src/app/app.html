@@ -5,9 +5,16 @@
     <img class="brand-logo brand-logo-dark" src="branding/selfsign-logotype-dark.svg" alt="SelfSign" width="100" height="35" />
   </div>
   <span class="spacer"></span>
+  @if (auth.enabled() && auth.state() === 'unlocked') {
+    <button matIconButton type="button" class="lock-button" aria-label="Lock" matTooltip="Lock" (click)="lock()">
+      <mat-icon svgIcon="lock" />
+    </button>
+  }
   <app-theme-toggle />
 </header>
 
+@switch (auth.state()) {
+@case ('unlocked') {
 <div class="app-body" [class.mobile]="layout.isMobile()">
   <main
     #documentList="cdkDropList"
@@ -48,4 +55,12 @@
   >
     <mat-icon svgIcon="fields" />
   </button>
+}
+}
+@case ('checking') {
+  <div class="auth-pending" aria-busy="true"></div>
+}
+@default {
+  <app-unlock-screen />
+}
 }

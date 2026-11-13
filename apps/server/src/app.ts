@@ -6,11 +6,16 @@ import fastifyStatic from '@fastify/static';
 import { isApiPath } from '@selfsign/shared';
 import Fastify, { type FastifyInstance, type FastifyReply } from 'fastify';
 import { registerApi } from './api.js';
+import { registerAuth } from './auth.js';
+import type { TrustProxy } from './config.js';
 
 export interface AppOptions {
   dataDir: string;
   webRoot: string;
   logger?: boolean;
+  /** Shared access password; undefined or empty disables authentication. */
+  password?: string;
+  trustProxy?: TrustProxy;
 }
 
 /** Placeholder in the web build's index.html, replaced by the per-request CSP style nonce. */
@@ -19,7 +24,7 @@ export const CSP_NONCE_PLACEHOLDER = '__CSP_NONCE__';
 export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
   await ensureWritableDirectory(options.dataDir);
 
-  const app = Fastify({ logger: options.logger ?? false });
+  const app = Fastify({ logger: options.logger ?? false, trustProxy: options.trustProxy ?? false });
 
   await app.register(helmet, {
     enableCSPNonces: true,
@@ -43,6 +48,8 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
     strictTransportSecurity: false,
   });
 
+  // Registered before the API so its hooks guard every API route.
+  await registerAuth(app, options.dataDir, options.password || undefined);
   await app.register(async (api) => registerApi(api, options.dataDir));
 
   const indexPath = path.join(options.webRoot, 'index.html');
