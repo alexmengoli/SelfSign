@@ -1,0 +1,19 @@
+# Install from the published image (no source code needed).
+# Usage:
+#   1. Download this file as docker-compose.yml (and optionally .env.example as .env)
+#   2. docker compose up -d
+# To pin a version: SELFSIGN_VERSION=1.0.0 docker compose up -d
+services:
+  selfsign:
+    image: ghcr.io/alexmengoli/selfsign:${SELFSIGN_VERSION:-latest}
+    container_name: selfsign
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data:/data
+    environment:
+      # Optional shared password; empty disables authentication.
+      APP_PASSWORD: ${APP_PASSWORD:-}
+      # Optional: trusted reverse proxy IPs/CIDRs (see README). Empty trusts none.
+      TRUST_PROXY: ${TRUST_PROXY:-}
+    restart: unless-stopped
