@@ -12,7 +12,7 @@ export interface ServerConfig {
   trustProxy: TrustProxy;
 }
 
-const DEFAULT_PORT = 8080;
+const DEFAULT_PORT = 3394;
 const DEFAULT_WEB_ROOT = fileURLToPath(new URL('../../web/dist/browser', import.meta.url));
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {

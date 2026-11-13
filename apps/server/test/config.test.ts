@@ -5,7 +5,7 @@ import { loadConfig } from '../src/config.js';
 describe('loadConfig', () => {
   it('uses defaults', () => {
     const config = loadConfig({});
-    expect(config.port).toBe(8080);
+    expect(config.port).toBe(3394);
     expect(config.dataDir).toBe(path.resolve('./data'));
     expect(config.webRoot.replaceAll('\\', '/')).toMatch(/apps\/web\/dist\/browser$/);
   });
