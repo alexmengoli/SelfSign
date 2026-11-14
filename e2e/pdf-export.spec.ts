@@ -172,7 +172,8 @@ async function deselect(page: Page): Promise<void> {
 
 async function reopen(page: Page, bytes: Buffer, name: string): Promise<void> {
   await toolbar(page).getByRole('button', { name: 'Close document' }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'Discard' }).click();
+  const dialog = page.getByRole('dialog');
+  if (await dialog.count()) await dialog.getByRole('button', { name: 'Discard' }).click();
   await openDocument(page, bytes, name);
 }
 
@@ -222,6 +223,31 @@ test.describe('pdf export', () => {
     await page.waitForTimeout(500);
     expect(downloads).toHaveLength(1);
     expect(downloads[0]!.suggestedFilename()).toBe('Scan-signed.pdf');
+  });
+
+  test('treats a successful export as saved until the next edit', async ({ page }) => {
+    await page.goto('/');
+    await openDocument(page, validPdf(1), 'saved-state.pdf');
+    await page.getByRole('button', { name: 'Place Text' }).click();
+    await page.getByRole('textbox', { name: 'Text' }).pressSequentially('Saved');
+    await page.keyboard.press('Escape');
+
+    await downloadBytes(await exportDownload(page));
+    await toolbar(page).getByRole('button', { name: 'Close document' }).click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Drop a PDF here or click to browse' })).toBeVisible();
+
+    await openDocument(page, validPdf(1), 'edited-state.pdf');
+    await page.getByRole('button', { name: 'Place Text' }).click();
+    await page.getByRole('textbox', { name: 'Text' }).pressSequentially('Before export');
+    await page.keyboard.press('Escape');
+    await downloadBytes(await exportDownload(page));
+    await page.locator('.element').dblclick();
+    await page.getByRole('textbox', { name: 'Text' }).press('End');
+    await page.getByRole('textbox', { name: 'Text' }).pressSequentially(' again');
+    await page.keyboard.press('Escape');
+    await toolbar(page).getByRole('button', { name: 'Close document' }).click();
+    await expect(page.getByRole('dialog', { name: 'Discard changes and close this document?' })).toBeVisible();
   });
 
   test('flattens text and images exactly where they are shown, on normal and rotated cropped pages', async ({ page }) => {
@@ -380,6 +406,10 @@ test.describe('pdf export', () => {
     expect(await box(element)).toEqual(before);
     await expect(toolbar(page).getByRole('button', { name: 'Undo' })).toBeEnabled();
     await expect(exportButton(page)).toBeEnabled();
+
+    await toolbar(page).getByRole('button', { name: 'Close document' }).click();
+    await expect(page.getByRole('dialog', { name: 'Discard changes and close this document?' })).toBeVisible();
+    await page.getByRole('dialog', { name: 'Discard changes and close this document?' }).getByRole('button', { name: 'Cancel' }).click();
 
     await page.unroute('**/fonts/*.ttf');
     const first = await readPdf(await downloadBytes(await exportDownload(page)));

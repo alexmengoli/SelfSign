@@ -1,6 +1,6 @@
 {
   "name": "selfsign",
-  "version": "0.2.0",
+  "version": "1.2.0",
   "private": true,
   "description": "Self-hosted web app to fill and visually sign PDFs entirely in the browser.",
   "license": "MIT",
@@ -22,12 +22,12 @@
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
-    "@playwright/test": "1.65.0",
+    "@playwright/test": "1.65.1",
     "@types/node": "26.6.6",
     "angular-eslint": "22.6.0",
     "concurrently": "10.0.7",
-    "eslint": "10.14.0",
-    "typescript": "6.0.3",
+    "eslint": "10.15.0",
+    "typescript": "7.0.2",
     "typescript-eslint": "8.72.2",
     "vitest": "5.1.0"
   }

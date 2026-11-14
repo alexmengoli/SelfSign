@@ -314,7 +314,7 @@ export class PdfViewer {
   }
 
   protected onBeforeUnload(event: BeforeUnloadEvent): void {
-    if (this.store.elements().length === 0) return;
+    if (!this.store.hasUnsavedChanges()) return;
     event.preventDefault();
     event.returnValue = '';
   }
@@ -378,7 +378,7 @@ export class PdfViewer {
   }
 
   protected requestClose(): void {
-    if (this.store.elements().length === 0) {
+    if (!this.store.hasUnsavedChanges()) {
       this.closeDocument();
       return;
     }
@@ -398,7 +398,10 @@ export class PdfViewer {
     try {
       this.store.endTextEdit();
       const bytes = await exportPdf({ buffer: loaded.buffer, pages: loaded.pages, elements: this.store.elements() });
-      if (this.store.document() === loaded) downloadPdf(bytes, exportFileName(loaded.name));
+      if (this.store.document() === loaded) {
+        downloadPdf(bytes, exportFileName(loaded.name));
+        this.store.markSaved();
+      }
     } catch (error) {
       console.error('PDF export failed:', error);
       this.snackBar.open(EXPORT_FAILED_MESSAGE, 'Close', { duration: 8000 });

@@ -117,6 +117,8 @@ export class DocumentStore {
   readonly elements = signal<readonly PlacedElement[]>([]);
   readonly selectedId = signal<string | null>(null);
   readonly editing = signal<EditSession | null>(null);
+  private readonly revision = signal(0);
+  private readonly cleanRevision = signal(0);
 
   private readonly history = new CommandHistory();
   private readonly historyVersion = signal(0);
@@ -131,6 +133,12 @@ export class DocumentStore {
     this.historyVersion();
     return this.history.canRedo;
   });
+
+  readonly hasUnsavedChanges = computed(() => this.revision() !== this.cleanRevision());
+
+  markSaved(): void {
+    this.cleanRevision.set(this.revision());
+  }
 
   open(loaded: LoadedDocument): void {
     this.reset();
@@ -197,6 +205,7 @@ export class DocumentStore {
   addElement(element: PlacedElement): void {
     const index = this.elements().length;
     this.elements.update((list) => [...list, element]);
+    this.markChanged();
     this.selectedId.set(element.id);
     this.recordInsert(element, index);
   }
@@ -204,6 +213,7 @@ export class DocumentStore {
   /** Adds a free text element; it becomes an undoable step when its first editing session ends. */
   insertPending(element: PlacedElement): void {
     this.elements.update((list) => [...list, element]);
+    this.markChanged();
     this.selectedId.set(element.id);
   }
 
@@ -357,6 +367,7 @@ export class DocumentStore {
   private writeElement(id: string, patch: ElementPatch): void {
     this.elements.update((list) =>
       list.map((element) => (element.id === id ? this.fitToPage({ ...element, ...patch }) : element)));
+    this.markChanged();
   }
 
   private fitToPage(element: PlacedElement): PlacedElement {
@@ -366,6 +377,7 @@ export class DocumentStore {
 
   private replaceElement(element: PlacedElement): void {
     this.elements.update((list) => list.map((item) => (item.id === element.id ? element : item)));
+    this.markChanged();
   }
 
   private insertAt(element: PlacedElement, index: number): void {
@@ -374,10 +386,12 @@ export class DocumentStore {
       next.splice(Math.min(index, next.length), 0, element);
       return next;
     });
+    this.markChanged();
   }
 
   private removeById(id: string): void {
     this.elements.update((list) => list.filter((item) => item.id !== id));
+    this.markChanged();
     if (this.selectedId() === id) this.selectedId.set(null);
     if (this.editing()?.elementId === id) this.editing.set(null);
   }
@@ -422,6 +436,10 @@ export class DocumentStore {
     this.historyVersion.update((version) => version + 1);
   }
 
+  private markChanged(): void {
+    this.revision.update((value) => value + 1);
+  }
+
   private reset(): void {
     for (const url of this.objectUrls) URL.revokeObjectURL(url);
     this.objectUrls.clear();
@@ -429,6 +447,8 @@ export class DocumentStore {
     this.selectedId.set(null);
     this.editing.set(null);
     this.history.clear();
+    this.revision.update((value) => value + 1);
+    this.cleanRevision.set(this.revision());
     this.historyVersion.update((version) => version + 1);
   }
 }
