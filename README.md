@@ -10,6 +10,10 @@ Open a PDF, drag text, dates and signature images onto its pages, and download t
 > SelfSign adds **visual** signatures (images and text drawn on the page). It does not create
 > cryptographic/digital signatures (PAdES, certificates).
 
+## Preview
+
+![SelfSign screenshot](docs/screenshots/screenshot-01.jpg)
+
 ## Quick start with Docker Compose
 
 ### Install from the published image
